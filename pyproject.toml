@@ -35,7 +35,7 @@ dependencies = [
     "torch>=1.8",
     "tqdm-multiprocess",
     "transformers>=4.1",
-    "zstandard",
+    "zstandard>=0.22",
 ]
 
 [tool.setuptools.packages.find]

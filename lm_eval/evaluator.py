@@ -1,27 +1,24 @@
-import random
+import collections
 import itertools
 import json
-import collections
+import random
 import sys
 
-import torch
-
-import numpy as np
-
 import lm_eval.api
-import lm_eval.tasks
-import lm_eval.models
 import lm_eval.api.metrics
 import lm_eval.api.registry
-
+import lm_eval.models
+import lm_eval.tasks
+import numpy as np
+import torch
 from lm_eval.utils import (
+    create_iterator,
+    eval_logger,
+    get_git_commit_hash,
+    make_table,
     positional_deprecated,
     run_task_tests,
-    make_table,
-    create_iterator,
-    get_git_commit_hash,
     simple_parse_args_string,
-    eval_logger,
 )
 
 

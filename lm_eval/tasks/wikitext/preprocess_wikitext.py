@@ -1,10 +1,13 @@
 import re
 
+from nltk.tokenize import sent_tokenize
+
 
 def wikitext_detokenizer(doc):
     string = doc["page"]
     # contractions
     string = string.replace("s '", "s'")
+    # string = " ".join([s.capitalize() for s in sent_tokenize(string)])
     string = re.sub(r"/' [0-9]/", r"/'[0-9]/", string)
     # number separators
     string = string.replace(" @-@ ", "-")
@@ -17,13 +20,11 @@ def wikitext_detokenizer(doc):
     string = string.replace(" ! ", "! ")
     string = string.replace(" ? ", "? ")
     string = string.replace(" , ", ", ")
-    # double brackets
-    string = re.sub(r"\(\s*([^\)]*?)\s*\)", r"(\1)", string)
-    string = re.sub(r"\[\s*([^\]]*?)\s*\]", r"[\1]", string)
-    string = re.sub(r"{\s*([^}]*?)\s*}", r"{\1}", string)
-    string = re.sub(r"\"\s*([^\"]*?)\s*\"", r'"\1"', string)
-    string = re.sub(r"'\s*([^']*?)\s*'", r"'\1'", string)
-    # miscellaneous
+    string = string.replace(" -rrb- ", ") ")
+    string = string.replace(" -lrb- ", " (")
+    string = string.replace("`` ", '"')
+    string = string.replace(" ''", '"')
+    # miscellaneous (most are from wikitext)
     string = string.replace("= = = =", "====")
     string = string.replace("= = =", "===")
     string = string.replace("= =", "==")

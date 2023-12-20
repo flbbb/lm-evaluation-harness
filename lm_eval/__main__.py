@@ -1,17 +1,17 @@
+import argparse
+import json
+import logging
 import os
 import re
 import sys
-import json
-import logging
-import argparse
-import numpy as np
-
 from pathlib import Path
 from typing import Union
 
+import numpy as np
+from dotenv import load_dotenv
 from lm_eval import evaluator, utils
-from lm_eval.tasks import initialize_tasks, include_path
 from lm_eval.api.registry import ALL_TASKS
+from lm_eval.tasks import include_path, initialize_tasks
 
 
 def _handle_non_serializable(o):
@@ -131,6 +131,7 @@ def cli_evaluate(args: Union[argparse.Namespace, None] = None) -> None:
     eval_logger.setLevel(getattr(logging, f"{args.verbosity}"))
     eval_logger.info(f"Verbosity set to {args.verbosity}")
     os.environ["TOKENIZERS_PARALLELISM"] = "false"
+    load_dotenv()
 
     initialize_tasks(args.verbosity)
 

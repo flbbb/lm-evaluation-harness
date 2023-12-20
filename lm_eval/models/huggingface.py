@@ -1,29 +1,26 @@
-import os
-from packaging import version
-import torch
-import transformers
-from transformers.models.auto.modeling_auto import (
-    MODEL_FOR_CAUSAL_LM_MAPPING_NAMES,
-    MODEL_FOR_SEQ_TO_SEQ_CAUSAL_LM_MAPPING_NAMES,
-)
-from peft import __version__ as PEFT_VERSION, PeftModel
-
 import copy
+import os
 from collections import defaultdict
-from tqdm import tqdm
 from pathlib import Path
+from typing import List, Optional, Tuple, Union
 
+import torch
 import torch.nn.functional as F
-
+import transformers
+from accelerate import Accelerator, DistributedType, find_executable_batch_size
 from lm_eval import utils
 from lm_eval.api.instance import Instance
 from lm_eval.api.model import LM
 from lm_eval.api.registry import register_model
-
 from lm_eval.utils import MultiTokenEOSCriteria, stop_sequences_criteria
-
-from accelerate import Accelerator, find_executable_batch_size, DistributedType
-from typing import List, Optional, Union, Tuple
+from packaging import version
+from peft import PeftModel
+from peft import __version__ as PEFT_VERSION
+from tqdm import tqdm
+from transformers.models.auto.modeling_auto import (
+    MODEL_FOR_CAUSAL_LM_MAPPING_NAMES,
+    MODEL_FOR_SEQ_TO_SEQ_CAUSAL_LM_MAPPING_NAMES,
+)
 
 eval_logger = utils.eval_logger
 
@@ -96,6 +93,7 @@ class HFLM(LM):
         bnb_4bit_compute_dtype: Optional[Union[str, torch.dtype]] = None,
         gptq: Optional[Union[bool, str]] = False,
         gptq_use_triton: Optional[bool] = False,
+        local_folder: Optional[str] = None,
     ) -> None:
         super().__init__()
 
@@ -152,6 +150,9 @@ class HFLM(LM):
         # TODO: update this to be less of a hack once subfolder is fixed in HF
         revision = revision + ("/" + subfolder if subfolder is not None else "")
 
+        if local_folder == "env":
+            checkpoint_dir = os.environ.get("CHECKPOINT_PATH")
+            pretrained = str(Path(checkpoint_dir) / pretrained)
         self._config = transformers.AutoConfig.from_pretrained(
             pretrained,
             revision=revision,
@@ -511,18 +512,23 @@ class HFLM(LM):
         # for non-greedy gen. This should be reevaluated when considering beam search.
         if "do_sample" not in generation_kwargs.keys():
             generation_kwargs["do_sample"] = False
-        # build stopping criteria
-        stopping_criteria = stop_sequences_criteria(
+            # build stopping criteria
+            # stopping_criteria = stop_sequences_criteria(
             self.tokenizer, stop, 1, context.shape[0]
-        )
-        return self.model.generate(
+        # )
+        generation_out = self.model.generate(
             input_ids=context,
             max_length=max_length,
-            stopping_criteria=stopping_criteria,
+            # stopping_criteria=stopping_criteria,
             pad_token_id=self.eot_token_id,
             use_cache=True,
             **generation_kwargs,
         )
+        import ipdb
+
+        ipdb.set_trace()
+
+        return generation_out
 
     def _select_cont_toks(self, logits, contlen=None, inplen=None):
         if self.AUTO_MODEL_CLASS == transformers.AutoModelForCausalLM:
@@ -917,7 +923,6 @@ class HFLM(LM):
                 )
                 context_enc = context_enc.to(self.device)
                 attn_masks = attn_masks.to(self.device)
-
                 if "max_length" not in kwargs:
                     kwargs["max_length"] = context_enc.shape[1] + max_gen_toks
 

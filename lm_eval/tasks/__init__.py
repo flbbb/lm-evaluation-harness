@@ -1,30 +1,29 @@
-import os
-import yaml
-from typing import List, Union, Dict
-
-from lm_eval import utils
-from lm_eval import prompts
-from lm_eval.api.task import TaskConfig, Task, ConfigurableTask
-from lm_eval.api.registry import (
-    register_task,
-    register_group,
-    TASK_REGISTRY,
-    GROUP_REGISTRY,
-    ALL_TASKS,
-)
-
 import logging
+import os
+from typing import Dict, List, Union
+
+import yaml
+from lm_eval import prompts, utils
+from lm_eval.api.registry import (
+    ALL_TASKS,
+    GROUP_REGISTRY,
+    TASK_REGISTRY,
+    register_group,
+    register_task,
+)
+from lm_eval.api.task import ConfigurableTask, Task, TaskConfig
+
+from .scrolls.task import (
+    ContractNLI,
+    GovReport,
+    NarrativeQA,
+    QMSum,
+    QuALITY,
+    SummScreenFD,
+)
 
 # import python tasks
 from .squadv2.task import SQuAD2
-from .scrolls.task import (
-    QuALITY,
-    NarrativeQA,
-    ContractNLI,
-    GovReport,
-    SummScreenFD,
-    QMSum,
-)
 
 eval_logger = utils.eval_logger
 
@@ -136,6 +135,7 @@ def include_task_folder(task_dir: str, register_task: bool = True) -> None:
         for f in file_list:
             if f.endswith(".yaml"):
                 yaml_path = os.path.join(root, f)
+
                 try:
                     config = utils.load_yaml_config(yaml_path)
 
@@ -180,7 +180,6 @@ def include_path(task_dir):
 
 
 def initialize_tasks(verbosity="INFO"):
-
     eval_logger.setLevel(getattr(logging, f"{verbosity}"))
 
     task_dir = os.path.dirname(os.path.abspath(__file__)) + "/"
